@@ -3,52 +3,31 @@ package logic;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.runner.notification.StoppedByUserException;
-
 public class Unit {
+	
+	ArrayList<Action>actions=new ArrayList<>();
+	
+	public void move(Action action){
+		action.spell();
+	}
+	
+	UnitListener unitListener;
 
-	public void addListener(Listener l) {
-		listener = l;
+	public void addUnitListener(UnitListener unitListener){
+		this.unitListener=unitListener;
+	}
+	
+	int hp;
+	int damage;
+	int timeToMove;
+
+	public int getHp() {
+		return hp;
 	}
 
-	private Listener listener = (i) -> {
-	};
-
-	private int healthPoint;
-	private int damage;
-	private int manaPoint;
-	private int speed;
-
-	private int currentHealthPoint;
-	private int currentDamage;
-	private int currentManaPoint;
-	private int currentSpeed;
-
-	private int waitToMove=100000;
-	private boolean canMakeMove;
-
-	private List<Action> actions = new ArrayList<>();
-
-	public Unit(int healthPoint, int damage, int manaPoint, int speed, List<Action> actions) {
-		super();
-		currentHealthPoint = this.healthPoint = healthPoint;
-		currentDamage = this.damage = damage;
-		currentManaPoint = this.manaPoint = manaPoint;
-		currentSpeed = this.speed = speed;
-		this.actions = actions;
-	}
-
-	public void makeAction(Action action) {
-		action.start();
-		canMakeMove=false;
-	}
-
-	public int getHealthPoint() {
-		return healthPoint;
-	}
-
-	public void setHealthPoint(int healthPoint) {
-		this.healthPoint = healthPoint;
+	public void setHp(int hp) {
+		this.hp = hp;
+		unitListener.getHp(hp);
 	}
 
 	public int getDamage() {
@@ -57,78 +36,51 @@ public class Unit {
 
 	public void setDamage(int damage) {
 		this.damage = damage;
+		unitListener.getDamage(damage);
 	}
 
-	public int getManaPoint() {
-		return manaPoint;
+	public int getTimeToMove() {
+		return timeToMove;
 	}
 
-	public void setManaPoint(int manaPoint) {
-		this.manaPoint = manaPoint;
+	public void setTimeToMove(int timeToMove) {
+		this.timeToMove = timeToMove;
+		unitListener.getTime(timeToMove);
+	}
+	
+	public boolean subtractTime(int diff){
+		setTimeToMove(timeToMove-diff);
+		if(timeToMove<0){
+			timeToMove=0;
+			return false;
+		}
+		return true;
 	}
 
-	public int getSpeed() {
-		return speed;
-	}
-
-	public void setSpeed(int speed) {
-		this.speed = speed;
-	}
-
-	public int getCurrentHealthPoint() {
-		return currentHealthPoint;
-	}
-
-	public void setCurrentHealthPoint(int currentHealthPoint) {
-		this.currentHealthPoint = currentHealthPoint;
-	}
-
-	public int getCurrentDamage() {
-		return currentDamage;
-	}
-
-	public void setCurrentDamage(int currentDamage) {
-		this.currentDamage = currentDamage;
-	}
-
-	public int getCurrentManaPoint() {
-		return currentManaPoint;
-	}
-
-	public void setCurrentManaPoint(int currentManaPoint) {
-		this.currentManaPoint = currentManaPoint;
-	}
-
-	public int getCurrentSpeed() {
-		return currentSpeed;
-	}
-
-	public void setCurrentSpeed(int currentSpeed) {
-		this.currentSpeed = currentSpeed;
-	}
-
-	public void start() {
-		mover=new Thread(r);
-		mover.start();
-	}
-
-	public void stop() {
-		mover.interrupt();
-	}
-
-	private Runnable r = () -> {
-		while (Thread.currentThread().isInterrupted()) {
-			waitToMove -= speed;
-			if (waitToMove > 0) {
-				waitToMove = 0;
-				canMakeMove = true;
-				listener.listen(waitToMove);
-				break;
+	Runnable run = new Runnable() {
+		@Override
+		public void run() {
+			long startTime = System.currentTimeMillis();
+			while (Thread.currentThread().isInterrupted()) {
+				long currentTime = System.currentTimeMillis();
+				long diff = startTime - currentTime;
+				timeToMove -= diff;
+				startTime = currentTime;
 			}
-			listener.listen(waitToMove);
 		}
 	};
 
-	private Thread mover;
+	Thread thread = new Thread(run);
+
+	public void startTimer() {
+		if (thread.isInterrupted()) {
+			thread = new Thread(run);
+		} else if (!thread.isAlive())
+			thread.start();
+	}
+
+	public void stopTimer() {
+		thread.interrupt();
+	}
 
 }

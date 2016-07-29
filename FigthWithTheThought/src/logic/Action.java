@@ -1,9 +1,10 @@
 package logic;
 
-import java.util.List;
-
-public interface Action {
-
-	public void start();
+public class Action {
 	
+	public void spell(){
+		
+	}
+	int numTarget;
+	public void 
 }
